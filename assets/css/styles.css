@@ -124,6 +124,12 @@ body {
   margin-bottom: 2px;
 }
 
+.app-card-tagline {
+  color: var(--text);
+  font-size: 0.9rem;
+  margin-bottom: 3px;
+}
+
 .app-card-meta {
   color: var(--text-muted);
   font-size: 0.875rem;

@@ -1,18 +1,53 @@
 # App Privacy Policies
 
-Static site hosting privacy policies for published mobile apps. Plain
-HTML/CSS/JS with no build step and no dependencies — deployable to GitHub Pages
-as-is.
+Static site hosting the privacy policies required by app store listings. Plain
+HTML, CSS and JavaScript — no build step, no dependencies, no framework.
+Deployable to GitHub Pages exactly as it stands.
 
-## URLs
+Every page is generated from a single data file, so publishing a policy for a
+new app means adding one object to `assets/js/apps-data.js`.
 
-| Page | Path |
-| --- | --- |
-| Home (all apps) | `/index.html` |
-| A policy | `/privacy.html?app=<code>` |
+## Published apps
 
-The `app` parameter accepts the app's short code, any alias, or its package id.
-All of these resolve to the same page:
+| App | Code | Package | Policy URL |
+| --- | --- | --- | --- |
+| Chess Master | `chess-master` | `com.chess.master.game` | `privacy.html?app=chess-master` |
+
+## Project structure
+
+```
+.
+├── index.html                  Home — lists every app
+├── privacy.html                Policy page — renders whichever app ?app= names
+├── assets/
+│   ├── css/
+│   │   └── styles.css          All styling; light and dark themes
+│   ├── img/
+│   │   └── chess-master.png    App icons (256×256)
+│   └── js/
+│       ├── apps-data.js        ← the app registry; the only file you normally edit
+│       ├── home.js             Builds the app list on the home page
+│       └── privacy.js          Generates policy text from an app's facts
+├── .nojekyll                   Stops GitHub Pages running Jekyll over the files
+├── .gitignore
+└── README.md
+```
+
+## How it works
+
+`apps-data.js` holds an `APPS` registry. Each entry carries the app's identity
+(name, package id, icon) plus a `facts` block describing its actual data
+practices. `privacy.js` turns those facts into the eleven standard policy
+sections, and `home.js` builds the index from the same registry.
+
+Because the wording is generated rather than hand-written per app, every policy
+stays consistent, and updating shared wording means editing one function instead
+of every page.
+
+### The `app` parameter
+
+`privacy.html` reads `?app=` and accepts the short code, any alias, or the
+package id — all case-insensitive and whitespace-tolerant:
 
 ```
 privacy.html?app=chess-master
@@ -20,13 +55,13 @@ privacy.html?app=com.chess.master.game
 privacy.html?app=chess
 ```
 
-An unknown or missing code renders a "not found" state linking back to the home
-page, so a bad link never shows a blank screen.
+An unknown or missing value renders a "not found" state that links back to the
+home page, so a mistyped link never shows a blank screen.
 
 ## Adding an app
 
-Edit `assets/js/apps-data.js` and add one entry to `APPS`. Nothing else needs to
-change — both pages are generated from that file.
+1. Drop the icon into `assets/img/` (256×256 PNG is plenty).
+2. Add an entry to `APPS` in `assets/js/apps-data.js`:
 
 ```js
 'my-app': {
@@ -41,7 +76,9 @@ change — both pages are generated from that file.
   facts: {
     collectsPersonalData: false,
     onDeviceOnly: ['Saved settings'],
-    permissions: [{ name: 'Network access (INTERNET)', reason: 'Why it is needed.' }],
+    permissions: [
+      { name: 'Network access (INTERNET)', reason: 'Why it is needed.' },
+    ],
     thirdPartyServices: [],      // e.g. ['Google AdMob — serves ads']
     showsAds: false,
     inAppPurchases: false,
@@ -51,8 +88,36 @@ change — both pages are generated from that file.
 },
 ```
 
-The `facts` block generates the policy wording, so it must describe what the app
-actually does. Add the app icon to `assets/img/` (256×256 PNG is plenty).
+3. Add the row to the table at the top of this README.
+
+### `facts` reference
+
+| Field | Type | Effect on the generated policy |
+| --- | --- | --- |
+| `collectsPersonalData` | boolean | `false` shows the "collects no personal data" banner and the no-collection wording |
+| `onDeviceOnly` | string[] | Lists what is stored locally; the section is omitted when empty |
+| `permissions` | `{name, reason}[]` | Renders the permissions section |
+| `thirdPartyServices` | string[] | Empty means "no third-party services"; otherwise each is listed |
+| `showsAds` | boolean | Advertising wording |
+| `inAppPurchases` | boolean | Purchases wording |
+| `requiresAccount` | boolean | Whether sign-in is needed |
+| `childDirected` | boolean | Children's-privacy wording |
+
+**This block is a legal statement about the app.** Check it against what the app
+actually does — permissions in the manifest, any analytics or ads SDKs, anything
+written to disk — rather than copying another app's entry.
+
+## Local preview
+
+The site is fully static, so any web server works:
+
+```sh
+python3 -m http.server 8000
+# then open http://localhost:8000/
+```
+
+Opening `index.html` directly over `file://` also works, since nothing uses
+`fetch` or modules.
 
 ## Deploying to GitHub Pages
 
@@ -60,17 +125,32 @@ actually does. Add the app icon to `assets/img/` (256×256 PNG is plenty).
 2. **Settings → Pages → Source**: *Deploy from a branch*, branch `main`, folder `/ (root)`.
 3. The site publishes at `https://<user>.github.io/<repo>/`.
 
-Paths are all relative, so the site works from a project subpath without
-configuration. `.nojekyll` is included to stop Jekyll from processing the files.
+All paths are relative, so the site works from a project subpath with no
+configuration. `.nojekyll` keeps Jekyll from processing the files.
 
-Use the full policy URL in the Play Console listing, for example:
+Paste the full policy URL into the store listing, for example:
 
 ```
 https://<user>.github.io/<repo>/privacy.html?app=chess-master
 ```
 
+Google Play requires the policy to be reachable publicly, without a login, and
+to stay live for as long as the app is listed.
+
 ## Before publishing
 
-`CONTACT_EMAIL` in `assets/js/apps-data.js` becomes public once deployed. Google
-Play requires a working contact address; swap in a support alias if you would
-rather not publish a personal inbox.
+- **`CONTACT_EMAIL` becomes public.** It is set in `assets/js/apps-data.js` and
+  is scrapable once deployed. Play requires a working contact address — use a
+  support alias if you would rather not publish a personal inbox.
+- **Check `effectiveDate`** on any policy you have edited.
+- **Re-read the `facts` block** for each app against its current build. A policy
+  that no longer matches the app is worse than no policy.
+
+## Implementation notes
+
+- **Output is built with DOM nodes, not `innerHTML`.** The `?app=` value is
+  reflected back in the unknown-app state, so on a public URL it is
+  attacker-controllable; building nodes means it can never be parsed as markup.
+- **Themes** follow `prefers-color-scheme`; both are defined in `styles.css`.
+- **Responsive** down to small phones, with a layout breakpoint at 480px.
+- **No dependencies**, so there is nothing to keep patched and no supply chain.

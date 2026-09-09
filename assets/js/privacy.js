@@ -209,18 +209,20 @@
     ])
   );
 
-  root.appendChild(
-    section("7. Children's Privacy", [
-      el(
-        'p',
-        null,
-        'The app is not directed at children under 13, and we do not knowingly ' +
-          'collect information from children. Because the app collects no ' +
-          'personal information from anyone, no such information about a child ' +
-          'can be collected, used, or disclosed.'
-      ),
-    ])
-  );
+  var childText = f.childDirected
+    ? 'The app is designed for a general audience that includes children, and ' +
+      'is operated in line with the Children\'s Online Privacy Protection Act ' +
+      '(COPPA) and the Google Play Families Policy.'
+    : 'The app is not directed at children under 13, and we do not knowingly ' +
+      'collect information from children.';
+
+  if (!f.collectsPersonalData) {
+    childText +=
+      ' Because the app collects no personal information from anyone, no such ' +
+      'information about a child can be collected, used, or disclosed.';
+  }
+
+  root.appendChild(section("7. Children's Privacy", [el('p', null, childText)]));
 
   root.appendChild(
     section('8. Data Security', [

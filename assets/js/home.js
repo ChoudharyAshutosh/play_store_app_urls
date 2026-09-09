@@ -35,12 +35,20 @@
     meta.className = 'app-card-meta';
     meta.textContent = app.packageId + ' · ' + app.platforms.join(', ');
 
+    var tagline = null;
+    if (app.tagline) {
+      tagline = document.createElement('div');
+      tagline.className = 'app-card-tagline';
+      tagline.textContent = app.tagline;
+    }
+
     var arrow = document.createElement('span');
     arrow.className = 'app-card-arrow';
     arrow.setAttribute('aria-hidden', 'true');
     arrow.textContent = '›';
 
     body.appendChild(name);
+    if (tagline) body.appendChild(tagline);
     body.appendChild(meta);
     a.appendChild(img);
     a.appendChild(body);
