@@ -64,6 +64,13 @@ function resolveApp(rawCode) {
   );
 }
 
+/** Link to an app's policy page, relative to the site root prefix `root`.
+ * Over file:// a folder link opens a directory listing, so name the file. */
+function appUrl(app, root) {
+  return (root || '') + app.code + '/' +
+    (window.location.protocol === 'file:' ? 'index.html' : '');
+}
+
 /** Apps in display order for the home page. */
 function allApps() {
   return Object.values(APPS).sort((a, b) => a.name.localeCompare(b.name));

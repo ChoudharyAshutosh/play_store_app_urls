@@ -11,14 +11,17 @@ new app means adding one object to `assets/js/apps-data.js`.
 
 | App | Code | Package | Policy URL |
 | --- | --- | --- | --- |
-| Chess Master | `chess-master` | `com.chess.master.game` | `privacy.html?app=chess-master` |
+| Chess Master | `chess-master` | `com.chess.master.game` | `chess-master/` |
 
 ## Project structure
 
 ```
 .
 ├── index.html                  Home — lists every app
-├── privacy.html                Policy page — renders whichever app ?app= names
+├── chess-master/
+│   ├── index.html              Chess Master's policy page
+│   └── app-ads.txt             Chess Master's AdMob app-ads.txt line
+├── privacy.html                Legacy ?app= URL — redirects to the app's folder
 ├── assets/
 │   ├── css/
 │   │   └── styles.css          All styling; light and dark themes
@@ -44,19 +47,16 @@ Because the wording is generated rather than hand-written per app, every policy
 stays consistent, and updating shared wording means editing one function instead
 of every page.
 
-### The `app` parameter
+### Policy URLs
 
-`privacy.html` reads `?app=` and accepts the short code, any alias, or the
-package id — all case-insensitive and whitespace-tolerant:
+Each app's policy lives in a folder named after its code, e.g. `chess-master/`.
+The folder's `index.html` names the app on `<body data-app="…" data-root="../">`,
+and `privacy.js` renders that app's policy.
 
-```
-privacy.html?app=chess-master
-privacy.html?app=com.chess.master.game
-privacy.html?app=chess
-```
-
-An unknown or missing value renders a "not found" state that links back to the
-home page, so a mistyped link never shows a blank screen.
+The older `privacy.html?app=` form still works and redirects to the folder, so
+links already pasted into a store listing keep resolving. It accepts the code,
+any alias, or the package id, case-insensitively; an unknown value renders a
+"not found" state that links back to the home page.
 
 ## Adding an app
 
@@ -88,7 +88,9 @@ home page, so a mistyped link never shows a blank screen.
 },
 ```
 
-3. Add the row to the table at the top of this README.
+3. Copy `chess-master/index.html` to `my-app/index.html` and change the
+   `data-app` attribute, `<title>`, description and icon to the new app.
+4. Add the row to the table at the top of this README.
 
 ### `facts` reference
 
@@ -117,7 +119,8 @@ python3 -m http.server 8000
 ```
 
 Opening `index.html` directly over `file://` also works, since nothing uses
-`fetch` or modules.
+`fetch` or modules (links point at `<code>/index.html` there, because browsers
+show a directory listing for a bare folder over `file://`).
 
 ## Deploying to GitHub Pages
 
@@ -131,7 +134,7 @@ configuration. `.nojekyll` keeps Jekyll from processing the files.
 Paste the full policy URL into the store listing, for example:
 
 ```
-https://<user>.github.io/<repo>/privacy.html?app=chess-master
+https://<user>.github.io/<repo>/chess-master/
 ```
 
 Google Play requires the policy to be reachable publicly, without a login, and

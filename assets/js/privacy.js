@@ -1,7 +1,8 @@
 /**
  * Renders a privacy policy from the app's `facts` block.
  *
- * URL: privacy.html?app=<code | alias | package id>
+ * URL: <code>/ (one folder per app). The legacy privacy.html?app=<code | alias |
+ * package id> URL redirects there.
  *
  * All output is built with textContent / DOM nodes rather than innerHTML: the
  * ?app= value is attacker-controllable and is reflected in the unknown-app
@@ -40,9 +41,17 @@
 
   /* ---------- resolve the app ---------- */
 
-  var params = new URLSearchParams(window.location.search);
-  var requested = params.get('app');
+  /* Per-app pages (<code>/index.html) name their app on <body>; the legacy
+   * privacy.html?app= URL is still accepted and redirected to that page. */
+  var siteRoot = document.body.getAttribute('data-root') || '';
+  var pageApp = document.body.getAttribute('data-app');
+  var requested = pageApp || new URLSearchParams(window.location.search).get('app');
   var app = resolveApp(requested);
+
+  if (app && !pageApp) {
+    window.location.replace(appUrl(app, siteRoot));
+    return;
+  }
 
   if (!app) {
     var box = el('div', 'error-box');
@@ -59,7 +68,7 @@
       )
     );
     var home = el('a', null, 'View all apps');
-    home.href = 'index.html';
+    home.href = siteRoot + 'index.html';
     box.appendChild(home);
     root.appendChild(box);
     return;
@@ -71,12 +80,12 @@
   /* ---------- header ---------- */
 
   var back = el('a', 'back-link', '‹ All apps');
-  back.href = 'index.html';
+  back.href = siteRoot + 'index.html';
   root.appendChild(back);
 
   var head = el('div', 'policy-head');
   var icon = document.createElement('img');
-  icon.src = app.icon;
+  icon.src = siteRoot + app.icon;
   icon.alt = '';
   icon.width = 60;
   icon.height = 60;

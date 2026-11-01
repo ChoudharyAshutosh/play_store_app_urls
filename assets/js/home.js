@@ -15,7 +15,7 @@
     var li = document.createElement('li');
     var a = document.createElement('a');
     a.className = 'app-card';
-    a.href = 'privacy.html?app=' + encodeURIComponent(app.code);
+    a.href = appUrl(app);
 
     var img = document.createElement('img');
     img.src = app.icon;
